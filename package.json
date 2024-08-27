@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "web.js",
   "scripts": {
-    "start": "node src/node.web.js"
+    "start": "node /app/src/node.web.js"
   },
   "author": "",
   "license": "ISC",
