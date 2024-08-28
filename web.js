@@ -60,7 +60,7 @@ const ftpServer = 'yogibo.ftp.cafe24.com';
 const ftpUsername = 'yogibo';
 const ftpPassword = 'korea2024@@';
 
-app.post('/upload', upload.array('files', 15), (req, res) => {
+app.post('/upload', upload.array('files', 10), (req, res) => {
     const { text, member_id, password } = req.body;
     console.log('Files received:', req.files);
     console.log('Text received:', text);
@@ -417,100 +417,6 @@ app.delete('/replay/:commentId/reply/:replyId', (req, res) => {
         });
     });
 });
-//프로필 추가
-app.post('/upload-profile', upload.single('profileImage'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: '파일이 업로드되지 않았습니다.' });
-    }
-
-    const client = new ftp();
-    const localFilePath = req.file.path;
-    const remoteFilePath = `/web/profile/${req.file.filename}`;
-
-    client.on('ready', () => {
-        fs.readFile(localFilePath, (err, data) => {
-            if (err) {
-                console.error('파일 로드 실패:', err);
-                return res.status(500).json({ error: '파일 로드 실패' });
-            }
-
-            client.put(data, remoteFilePath, (err) => {
-                if (err) {
-                    console.error('FTP 업로드 실패:', err);
-                    return res.status(500).json({ error: 'FTP 업로드 실패' });
-                }
-
-                console.log(`프로필 사진 업로드 완료: ${remoteFilePath}`);
-
-                fs.unlink(localFilePath, (err) => {
-                    if (err) {
-                        console.error('파일 삭제 실패:', err);
-                        return res.status(500).json({ error: '파일 삭제 실패' });
-                    }
-
-                    res.status(200).json({ message: '프로필 사진 업로드 성공', remoteFilePath: remoteFilePath });
-                });
-
-                client.end();
-            });
-        });
-    });
-
-    client.on('error', (err) => {
-        console.error('FTP client error:', err);
-        res.status(500).json({ error: 'FTP client error', details: err.message });
-    });
-
-    console.log('Connecting to FTP server for profile upload');
-    client.connect({
-        host: ftpServer,
-        user: ftpUsername,
-        password: ftpPassword
-    });
-});
-
-// 프로필 이미지 업로드 엔드포인트 추가
-app.post('/uploadProfileImage', upload.single('profileImage'), (req, res) => {
-    const { member_id } = req.body;
-    const file = req.file;
-    if (!file) {
-        return res.status(400).json({ error: '프로필 이미지가 업로드되지 않았습니다.' });
-    }
-
-    const client = new ftp();
-    const remoteFilePath = `/web/profile_images/${file.filename}`;
-
-    client.on('ready', () => {
-        fs.readFile(file.path, (err, data) => {
-            if (err) {
-                console.error('파일 읽기 실패:', err);
-                return res.status(500).json({ error: '파일 읽기 실패' });
-            }
-            client.put(data, remoteFilePath, (err) => {
-                if (err) {
-                    console.error('FTP 업로드 실패:', err);
-                    return res.status(500).json({ error: 'FTP 업로드 실패' });
-                }
-                // 데이터베이스에 프로필 이미지 URL 업데이트
-                db.collection('users').updateOne({ member_id: member_id }, { $set: { profileImageUrl: remoteFilePath } }, { upsert: true }, (err, result) => {
-                    if (err) {
-                        console.error('프로필 이미지 URL 저장 실패:', err);
-                        return res.status(500).json({ error: '프로필 이미지 URL 저장 실패' });
-                    }
-                    res.status(200).json({ message: '프로필 이미지 업로드 및 저장 성공', profileImageUrl: remoteFilePath });
-                });
-                client.end();
-            });
-        });
-    });
-
-    client.connect({
-        host: ftpServer,
-        user: ftpUsername,
-        password: ftpPassword
-    });
-});
-
 
 app.delete('/replay/:commentId/reply/:replyId/nested-reply/:nestedReplyId', (req, res) => {
     const commentId = req.params.commentId;
