@@ -469,6 +469,49 @@ app.post('/upload-profile', upload.single('profileImage'), (req, res) => {
     });
 });
 
+// 프로필 이미지 업로드 엔드포인트 추가
+app.post('/uploadProfileImage', upload.single('profileImage'), (req, res) => {
+    const { member_id } = req.body;
+    const file = req.file;
+    if (!file) {
+        return res.status(400).json({ error: '프로필 이미지가 업로드되지 않았습니다.' });
+    }
+
+    const client = new ftp();
+    const remoteFilePath = `/web/profile_images/${file.filename}`;
+
+    client.on('ready', () => {
+        fs.readFile(file.path, (err, data) => {
+            if (err) {
+                console.error('파일 읽기 실패:', err);
+                return res.status(500).json({ error: '파일 읽기 실패' });
+            }
+            client.put(data, remoteFilePath, (err) => {
+                if (err) {
+                    console.error('FTP 업로드 실패:', err);
+                    return res.status(500).json({ error: 'FTP 업로드 실패' });
+                }
+                // 데이터베이스에 프로필 이미지 URL 업데이트
+                db.collection('users').updateOne({ member_id: member_id }, { $set: { profileImageUrl: remoteFilePath } }, { upsert: true }, (err, result) => {
+                    if (err) {
+                        console.error('프로필 이미지 URL 저장 실패:', err);
+                        return res.status(500).json({ error: '프로필 이미지 URL 저장 실패' });
+                    }
+                    res.status(200).json({ message: '프로필 이미지 업로드 및 저장 성공', profileImageUrl: remoteFilePath });
+                });
+                client.end();
+            });
+        });
+    });
+
+    client.connect({
+        host: ftpServer,
+        user: ftpUsername,
+        password: ftpPassword
+    });
+});
+
+
 app.delete('/replay/:commentId/reply/:replyId/nested-reply/:nestedReplyId', (req, res) => {
     const commentId = req.params.commentId;
     const replyId = req.params.replyId;
