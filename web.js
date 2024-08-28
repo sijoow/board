@@ -417,6 +417,57 @@ app.delete('/replay/:commentId/reply/:replyId', (req, res) => {
         });
     });
 });
+//프로필 추가
+app.post('/upload-profile', upload.single('profileImage'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: '파일이 업로드되지 않았습니다.' });
+    }
+
+    const client = new ftp();
+    const localFilePath = req.file.path;
+    const remoteFilePath = `/web/profile/${req.file.filename}`;
+
+    client.on('ready', () => {
+        fs.readFile(localFilePath, (err, data) => {
+            if (err) {
+                console.error('파일 로드 실패:', err);
+                return res.status(500).json({ error: '파일 로드 실패' });
+            }
+
+            client.put(data, remoteFilePath, (err) => {
+                if (err) {
+                    console.error('FTP 업로드 실패:', err);
+                    return res.status(500).json({ error: 'FTP 업로드 실패' });
+                }
+
+                console.log(`프로필 사진 업로드 완료: ${remoteFilePath}`);
+
+                fs.unlink(localFilePath, (err) => {
+                    if (err) {
+                        console.error('파일 삭제 실패:', err);
+                        return res.status(500).json({ error: '파일 삭제 실패' });
+                    }
+
+                    res.status(200).json({ message: '프로필 사진 업로드 성공', remoteFilePath: remoteFilePath });
+                });
+
+                client.end();
+            });
+        });
+    });
+
+    client.on('error', (err) => {
+        console.error('FTP client error:', err);
+        res.status(500).json({ error: 'FTP client error', details: err.message });
+    });
+
+    console.log('Connecting to FTP server for profile upload');
+    client.connect({
+        host: ftpServer,
+        user: ftpUsername,
+        password: ftpPassword
+    });
+});
 
 app.delete('/replay/:commentId/reply/:replyId/nested-reply/:nestedReplyId', (req, res) => {
     const commentId = req.params.commentId;
