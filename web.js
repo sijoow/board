@@ -60,7 +60,7 @@ const ftpServer = 'yogibo.ftp.cafe24.com';
 const ftpUsername = 'yogibo';
 const ftpPassword = 'korea2024@@';
 
-app.post('/upload', upload.array('files', 10), (req, res) => {
+app.post('/upload', upload.array('files', 15), (req, res) => {
     const { text, member_id, password } = req.body;
     console.log('Files received:', req.files);
     console.log('Text received:', text);
