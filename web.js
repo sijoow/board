@@ -20,7 +20,7 @@ const MONGO_URI = 'mongodb+srv://yogibo:yogibo@cluster0.vvkyawf.mongodb.net/?ret
 // MongoDB 연결
 MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(client => {
-        db = client.db('yogibo'); // 'yogibo' 데이터베이스에 연결
+        db = client.db('yogibo');
         console.log('MongoDB에 연결되었습니다.');
 
         // 서버 시작
@@ -287,7 +287,6 @@ app.put('/replay/:id', upload.array('files', 20), (req, res) => {
     });
 });
 
-
 // 댓글 삭제하기
 app.delete('/replay/:id', (req, res) => {
     const commentId = req.params.id;
@@ -325,8 +324,6 @@ app.delete('/replay/:id', (req, res) => {
         }
     });
 });
-
-
 
 // 대댓글 작성하기
 app.post('/replay/:id/reply', (req, res) => {
