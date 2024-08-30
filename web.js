@@ -291,19 +291,25 @@ app.post('/replay/:id/like', async (req, res) => {
     const commentId = req.params.id;
     const userId = req.headers['x-user-id'];
 
-    // 사용자 인증을 제대로 확인하는 부분 추가
-    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+    // 로그인 검증
+    if (!userId) {
         return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
     }
 
     try {
+        // 댓글 조회
         const review = await db.collection('replay').findOne({ _id: new ObjectId(commentId) });
         if (!review) {
             return res.status(404).json({ success: false, message: '댓글을 찾을 수 없습니다.' });
         }
 
+        // `likesUsers` 필드 초기화 체크
+        if (!Array.isArray(review.likesUsers)) {
+            review.likesUsers = []; // 배열이 아니면 초기화
+        }
+
         // 사용자가 이미 좋아요를 눌렀는지 확인
-        const userLikeIndex = review.likesUsers ? review.likesUsers.indexOf(userId) : -1;
+        const userLikeIndex = review.likesUsers.indexOf(userId);
         let likes = review.likes || 0;
 
         if (userLikeIndex === -1) {
@@ -311,14 +317,14 @@ app.post('/replay/:id/like', async (req, res) => {
             likes++;
             await db.collection('replay').updateOne(
                 { _id: new ObjectId(commentId) },
-                { $inc: { likes: 1 }, $push: { likesUsers: userId } }
+                { $set: { likes: likes }, $push: { likesUsers: userId } }
             );
         } else {
             // 좋아요 취소
             likes--;
             await db.collection('replay').updateOne(
                 { _id: new ObjectId(commentId) },
-                { $inc: { likes: -1 }, $pull: { likesUsers: userId } }
+                { $set: { likes: likes }, $pull: { likesUsers: userId } }
             );
         }
 
