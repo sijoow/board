@@ -57,8 +57,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const ftpServer = 'yogibo.ftp.cafe24.com';
-const ftpUsername = 'yogibo';
-const ftpPassword = 'korea2024@@';
+const ftpUsername = 'yog412412ibo';
+const ftpPassword = '2141241@@';
 
 app.post('/upload', upload.array('files', 10), (req, res) => {
     const { text, member_id, password } = req.body;
@@ -284,6 +284,43 @@ app.put('/replay/:id', upload.array('files', 20), (req, res) => {
                 res.status(200).json({ message: '댓글 수정 성공' });
             });
         }
+    });
+});
+//좋아요 기능
+app.post('/replay/:id/like', (req, res) => {
+    const commentId = req.params.id;
+    const { member_id } = req.body;
+
+    db.collection('replay').findOne({ _id: new ObjectId(commentId) }, (err, review) => {
+        if (err || !review) {
+            console.error('댓글 조회 실패:', err);
+            return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
+        }
+
+        // 좋아요 배열이 없으면 초기화
+        if (!review.likes) {
+            review.likes = [];
+        }
+
+        // 좋아요 토글
+        const likeIndex = review.likes.indexOf(member_id);
+        if (likeIndex === -1) {
+            review.likes.push(member_id); // 좋아요 추가
+        } else {
+            review.likes.splice(likeIndex, 1); // 좋아요 취소
+        }
+
+        db.collection('replay').updateOne(
+            { _id: new ObjectId(commentId) },
+            { $set: { likes: review.likes } },
+            (err, result) => {
+                if (err) {
+                    console.error('좋아요 토글 실패:', err);
+                    return res.status(500).json({ error: '좋아요 토글 실패' });
+                }
+                res.status(200).json({ message: '좋아요 토글 성공', likes: review.likes });
+            }
+        );
     });
 });
 
