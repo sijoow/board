@@ -57,8 +57,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const ftpServer = 'yogibo.ftp.cafe24.com';
-const ftpUsername = 'yog412412ibo';
-const ftpPassword = '2141241@@';
+const ftpUsername = 'yogibo';
+const ftpPassword = 'korea2024@@';
 
 app.post('/upload', upload.array('files', 10), (req, res) => {
     const { text, member_id, password } = req.body;
@@ -318,7 +318,6 @@ app.post('/replay/:id/like', (req, res) => {
         );
     });
 });
-
 // 댓글 삭제하기
 app.delete('/replay/:id', (req, res) => {
     const commentId = req.params.id;
