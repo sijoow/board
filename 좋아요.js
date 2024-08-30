@@ -286,6 +286,54 @@ app.put('/replay/:id', upload.array('files', 20), (req, res) => {
         }
     });
 });
+// 좋아요 기능
+app.post('/replay/:id/like', async (req, res) => {
+    const commentId = req.params.id;
+    const userId = req.headers['x-user-id'];
+
+    // 로그인 검증
+    if (!userId) {
+        return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    try {
+        // 댓글 조회
+        const review = await db.collection('replay').findOne({ _id: new ObjectId(commentId) });
+        if (!review) {
+            return res.status(404).json({ success: false, message: '댓글을 찾을 수 없습니다.' });
+        }
+
+        // `likesUsers` 필드 초기화 체크
+        if (!Array.isArray(review.likesUsers)) {
+            review.likesUsers = []; // 배열이 아니면 초기화
+        }
+
+        // 사용자가 이미 좋아요를 눌렀는지 확인
+        const userLikeIndex = review.likesUsers.indexOf(userId);
+        let likes = review.likes || 0;
+
+        if (userLikeIndex === -1) {
+            // 좋아요 추가
+            likes++;
+            await db.collection('replay').updateOne(
+                { _id: new ObjectId(commentId) },
+                { $set: { likes: likes }, $push: { likesUsers: userId } }
+            );
+        } else {
+            // 좋아요 취소
+            likes--;
+            await db.collection('replay').updateOne(
+                { _id: new ObjectId(commentId) },
+                { $set: { likes: likes }, $pull: { likesUsers: userId } }
+            );
+        }
+
+        res.status(200).json({ success: true, likes });
+    } catch (error) {
+        console.error('좋아요 처리 중 오류 발생:', error);
+        res.status(500).json({ success: false, message: '좋아요 처리 중 오류 발생' });
+    }
+});
 
 // 댓글 삭제하기
 app.delete('/replay/:id', (req, res) => {
