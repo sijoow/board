@@ -286,12 +286,13 @@ app.put('/replay/:id', upload.array('files', 20), (req, res) => {
         }
     });
 });
-//좋아요 기능
+// 좋아요 기능
 app.post('/replay/:id/like', async (req, res) => {
     const commentId = req.params.id;
     const userId = req.headers['x-user-id'];
 
-    if (!userId) {
+    // 사용자 인증을 제대로 확인하는 부분 추가
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
         return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
     }
 
@@ -327,6 +328,7 @@ app.post('/replay/:id/like', async (req, res) => {
         res.status(500).json({ success: false, message: '좋아요 처리 중 오류 발생' });
     }
 });
+
 // 댓글 삭제하기
 app.delete('/replay/:id', (req, res) => {
     const commentId = req.params.id;
