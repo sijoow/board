@@ -287,36 +287,45 @@ app.put('/replay/:id', upload.array('files', 20), (req, res) => {
     });
 });
 //좋아요 기능
-app.post('/replay/:id/like', (req, res) => {
+app.post('/replay/:id/like', async (req, res) => {
     const commentId = req.params.id;
-    const userId = req.headers['x-user-id']; // 사용자 ID 확인
+    const userId = req.headers['x-user-id'];
 
-    db.collection('replay').findOne({ _id: new ObjectId(commentId) }, (err, review) => {
-        if (err || !review) {
-            console.error('댓글 조회 실패:', err);
-            return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
+    if (!userId) {
+        return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    try {
+        const review = await db.collection('replay').findOne({ _id: new ObjectId(commentId) });
+        if (!review) {
+            return res.status(404).json({ success: false, message: '댓글을 찾을 수 없습니다.' });
         }
 
-        const likesSet = new Set(review.likes || []); // 중복 방지를 위해 Set 사용
+        // 사용자가 이미 좋아요를 눌렀는지 확인
+        const userLikeIndex = review.likesUsers ? review.likesUsers.indexOf(userId) : -1;
+        let likes = review.likes || 0;
 
-        if (likesSet.has(userId)) {
-            likesSet.delete(userId); // 이미 좋아요 상태라면 좋아요 취소
+        if (userLikeIndex === -1) {
+            // 좋아요 추가
+            likes++;
+            await db.collection('replay').updateOne(
+                { _id: new ObjectId(commentId) },
+                { $inc: { likes: 1 }, $push: { likesUsers: userId } }
+            );
         } else {
-            likesSet.add(userId); // 좋아요 추가
+            // 좋아요 취소
+            likes--;
+            await db.collection('replay').updateOne(
+                { _id: new ObjectId(commentId) },
+                { $inc: { likes: -1 }, $pull: { likesUsers: userId } }
+            );
         }
 
-        db.collection('replay').updateOne(
-            { _id: new ObjectId(commentId) },
-            { $set: { likes: Array.from(likesSet) } }, // 좋아요 목록 업데이트
-            (err, result) => {
-                if (err) {
-                    console.error('좋아요 업데이트 실패:', err);
-                    return res.status(500).json({ error: '좋아요 업데이트 실패' });
-                }
-                res.status(200).json({ message: '좋아요 토글 성공', likes: likesSet.size }); // 좋아요 수 반환
-            }
-        );
-    });
+        res.status(200).json({ success: true, likes });
+    } catch (error) {
+        console.error('좋아요 처리 중 오류 발생:', error);
+        res.status(500).json({ success: false, message: '좋아요 처리 중 오류 발생' });
+    }
 });
 // 댓글 삭제하기
 app.delete('/replay/:id', (req, res) => {
