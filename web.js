@@ -289,7 +289,7 @@ app.put('/replay/:id', upload.array('files', 20), (req, res) => {
 //좋아요 기능
 app.post('/replay/:id/like', (req, res) => {
     const commentId = req.params.id;
-    const { member_id } = req.body;
+    const userId = req.headers['x-user-id']; // 사용자 ID 확인
 
     db.collection('replay').findOne({ _id: new ObjectId(commentId) }, (err, review) => {
         if (err || !review) {
@@ -297,28 +297,23 @@ app.post('/replay/:id/like', (req, res) => {
             return res.status(404).json({ error: '댓글을 찾을 수 없습니다.' });
         }
 
-        // 좋아요 배열이 없으면 초기화
-        if (!review.likes) {
-            review.likes = [];
-        }
+        const likesSet = new Set(review.likes || []); // 중복 방지를 위해 Set 사용
 
-        // 좋아요 토글
-        const likeIndex = review.likes.indexOf(member_id);
-        if (likeIndex === -1) {
-            review.likes.push(member_id); // 좋아요 추가
+        if (likesSet.has(userId)) {
+            likesSet.delete(userId); // 이미 좋아요 상태라면 좋아요 취소
         } else {
-            review.likes.splice(likeIndex, 1); // 좋아요 취소
+            likesSet.add(userId); // 좋아요 추가
         }
 
         db.collection('replay').updateOne(
             { _id: new ObjectId(commentId) },
-            { $set: { likes: review.likes } },
+            { $set: { likes: Array.from(likesSet) } }, // 좋아요 목록 업데이트
             (err, result) => {
                 if (err) {
-                    console.error('좋아요 토글 실패:', err);
-                    return res.status(500).json({ error: '좋아요 토글 실패' });
+                    console.error('좋아요 업데이트 실패:', err);
+                    return res.status(500).json({ error: '좋아요 업데이트 실패' });
                 }
-                res.status(200).json({ message: '좋아요 토글 성공', likes: review.likes });
+                res.status(200).json({ message: '좋아요 토글 성공', likes: likesSet.size }); // 좋아요 수 반환
             }
         );
     });
