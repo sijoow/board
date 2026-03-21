@@ -124,7 +124,7 @@ export default function AdminBoardDetail({ params }: { params: Promise<{ id: str
   };
 
   const handleDeleteBoard = async () => {
-    if (confirm("정말 이 게시판 데모를 휴지통으로 이동시키시겠습니까?")) {
+    if (confirm("정말 이 게시판을 휴지통으로 이동시키시겠습니까?")) {
       await deleteBoard(id);
       alert("게시판이 삭제되었습니다.");
       router.push("/admin/trash");

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Settings } from "lucide-react";
+import { BookOpen, Settings } from "lucide-react";
 
 export default function Home() {
   return (
@@ -29,15 +29,15 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/board/mock-123"
+            href="/admin/guide"
             className="group flex flex-col items-center justify-center space-y-3 p-8 rounded-2xl bg-neutral-900 border border-neutral-800 hover:border-emerald-500 hover:bg-neutral-800/50 transition-all"
           >
             <div className="p-4 bg-emerald-500/10 text-emerald-400 rounded-full group-hover:scale-110 transition-transform">
-              <ArrowRight className="w-8 h-8" />
+              <BookOpen className="w-8 h-8" />
             </div>
             <div className="text-center">
-              <h2 className="text-xl font-bold">고객 화면 데모</h2>
-              <p className="text-sm text-neutral-500 mt-1">고객이 보게 될 피드백 UI 미리보기</p>
+              <h2 className="text-xl font-bold">사용설명서 확인하기</h2>
+              <p className="text-sm text-neutral-500 mt-1">시스템 상세 사용 가이드</p>
             </div>
           </Link>
         </div>
