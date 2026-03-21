@@ -173,7 +173,7 @@ export default function NewBoard() {
                 required
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
-                placeholder="예: 2024년 제품 브로슈어 인쇄"
+                placeholder="예: 제품 브로슈어 인쇄"
                 className="w-full bg-neutral-950 border border-neutral-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
               />
             </div>

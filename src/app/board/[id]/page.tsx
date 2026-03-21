@@ -12,6 +12,7 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
   const { id } = use(params);
   
   const [board, setBoard] = useState<Board | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedVersion, setSelectedVersion] = useState<number>(1);
@@ -28,6 +29,8 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
         if (!boardData.currentVersion) boardData.currentVersion = 1;
         setBoard(boardData);
         setSelectedVersion(boardData.currentVersion);
+      } else {
+        setNotFound(true);
       }
     });
 
@@ -108,7 +111,17 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
     }
   };
 
-  if (!board) return <div className="p-8 text-neutral-500 h-screen flex items-center justify-center">데이터를 불러오는 중입니다...</div>;
+  if (notFound) {
+    return (
+      <div className="p-8 text-neutral-500 h-screen flex flex-col items-center justify-center bg-neutral-950 space-y-4">
+        <AlertCircle className="w-12 h-12 text-rose-500" />
+        <p className="text-lg font-bold text-white">존재하지 않거나 삭제된 게시판입니다.</p>
+        <p className="text-sm text-neutral-400">잘못된 링크이거나 관리자가 프로젝트를 삭제했을 수 있습니다.</p>
+      </div>
+    );
+  }
+
+  if (!board) return <div className="p-8 text-neutral-500 h-screen flex items-center justify-center bg-neutral-950 text-white">데이터를 불러오는 중입니다...</div>;
 
   const versions = Array.from({ length: board.currentVersion }, (_, i) => i + 1);
   const currentMarkers = messages.filter(m => m.targetVersion === selectedVersion && m.pinX !== undefined);
@@ -278,7 +291,7 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
             </div>
 
             {messages.map((msg) => {
-              const dateStr = msg.createdAt ? format(msg.createdAt.toDate(), "a h:mm", { locale: ko }) : "";
+              const dateStr = msg.createdAt?.toDate ? format(msg.createdAt.toDate(), "a h:mm", { locale: ko }) : (msg.createdAt?.seconds ? format(new Date(msg.createdAt.seconds * 1000), "a h:mm", { locale: ko }) : "");
               
               if (msg.sender === "system") {
                 return (

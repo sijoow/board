@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessageSquare, Image as ImageIcon, ArrowRight, Upload, Layers, Trash2, MapPin, CheckCircle, X, Maximize } from "lucide-react";
+import { ArrowLeft, MessageSquare, Image as ImageIcon, ArrowRight, Upload, Layers, Trash2, MapPin, CheckCircle, X, Maximize, AlertCircle } from "lucide-react";
 import { doc, collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../../../lib/firebase";
 import { sendMessage, uploadNewVersion, deleteBoard, Board, Message, resetUnreadMessages, deleteMessage } from "../../../../lib/services";
@@ -16,6 +16,7 @@ export default function AdminBoardDetail({ params }: { params: Promise<{ id: str
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [board, setBoard] = useState<Board | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedVersion, setSelectedVersion] = useState<number>(1);
@@ -60,6 +61,8 @@ export default function AdminBoardDetail({ params }: { params: Promise<{ id: str
         if (!boardData.currentVersion) boardData.currentVersion = 1;
         setBoard(boardData);
         setSelectedVersion(boardData.currentVersion);
+      } else {
+        setNotFound(true);
       }
     });
 
@@ -133,6 +136,18 @@ export default function AdminBoardDetail({ params }: { params: Promise<{ id: str
       await deleteMessage(id, msgId);
     }
   };
+
+  if (notFound) {
+    return (
+      <div className="p-8 text-neutral-500 flex flex-col items-center justify-center h-screen space-y-4 bg-neutral-50 dark:bg-neutral-950">
+        <AlertCircle className="w-12 h-12 text-rose-500" />
+        <p className="text-lg font-bold text-neutral-900 dark:text-white">존재하지 않거나 삭제된 게시판입니다.</p>
+        <button onClick={() => router.push('/admin')} className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-colors">
+          대시보드로 돌아가기
+        </button>
+      </div>
+    );
+  }
 
   if (!board) return <div className="p-8 text-neutral-500 flex items-center justify-center h-screen">데이터를 불러오는 중입니다...</div>;
 
@@ -307,7 +322,7 @@ export default function AdminBoardDetail({ params }: { params: Promise<{ id: str
             {messages.map((msg) => {
               const isAdmin = msg.sender === "admin";
               const isSystem = msg.sender === "system";
-              const dateStr = msg.createdAt ? format(msg.createdAt.toDate(), "a h:mm", { locale: ko }) : "";
+              const dateStr = msg.createdAt?.toDate ? format(msg.createdAt.toDate(), "a h:mm", { locale: ko }) : (msg.createdAt?.seconds ? format(new Date(msg.createdAt.seconds * 1000), "a h:mm", { locale: ko }) : "");
               const hasPin = msg.pinX !== undefined;
               
               if (isSystem) {

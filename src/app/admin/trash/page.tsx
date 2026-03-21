@@ -82,7 +82,7 @@ export default function TrashDesktop() {
               <div className="text-xs text-neutral-400 dark:text-neutral-500 space-y-1 mb-6">
                 <p>최종 시안: {board.currentVersion}차</p>
                 {board.deletedAt && (
-                  <p>삭제 일시: {format(board.deletedAt.toDate(), "M월 d일 a h:mm", { locale: ko })}</p>
+                  <p>삭제 일시: {board.deletedAt?.toDate ? format(board.deletedAt.toDate(), "M월 d일 a h:mm", { locale: ko }) : (board.deletedAt?.seconds ? format(new Date(board.deletedAt.seconds * 1000), "M월 d일 a h:mm", { locale: ko }) : "-")}</p>
                 )}
               </div>
 

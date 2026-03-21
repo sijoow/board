@@ -33,12 +33,16 @@ export default function AdminCompletedPage() {
 
   const formatTime = (timestamp: any) => {
     if (!timestamp) return "";
-    return formatDistanceToNow(timestamp.toDate(), { addSuffix: true, locale: ko });
+    if (timestamp.toDate) return formatDistanceToNow(timestamp.toDate(), { addSuffix: true, locale: ko });
+    if (timestamp.seconds) return formatDistanceToNow(new Date(timestamp.seconds * 1000), { addSuffix: true, locale: ko });
+    return "";
   };
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return "-";
-    return format(timestamp.toDate(), "yyyy.MM.dd HH:mm");
+    if (timestamp.toDate) return format(timestamp.toDate(), "yyyy.MM.dd HH:mm");
+    if (timestamp.seconds) return format(new Date(timestamp.seconds * 1000), "yyyy.MM.dd HH:mm");
+    return "-";
   };
 
   return (
