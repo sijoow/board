@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Clock, ExternalLink, MessageCircle, LayoutGrid, List as ListIcon, Trash2, Calendar, Copy, Check } from "lucide-react";
+import { Clock, ExternalLink, MessageCircle, LayoutGrid, List as ListIcon, Trash2, Calendar } from "lucide-react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { Board, deleteBoard } from "../../lib/services";
@@ -13,16 +13,6 @@ export default function AdminDashboard() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const handleCopyUrl = (e: React.MouseEvent, boardId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const url = `${window.location.origin}/board/${boardId}`;
-    navigator.clipboard.writeText(url);
-    setCopiedId(boardId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
 
   useEffect(() => {
     const q = query(collection(db, "boards"), orderBy("updatedAt", "desc"));
@@ -206,25 +196,15 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 text-neutral-500">{board.currentVersion}차</td>
                     <td className="px-6 py-4">{getStatusBadge(board.status)}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center space-x-1.5 max-w-[220px]">
-                        <span className="text-xs text-indigo-400 dark:text-indigo-400 font-mono truncate">/board/{board.id}</span>
-                        <button
-                          onClick={(e) => handleCopyUrl(e, board.id!)}
-                          className="shrink-0 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
-                          title="URL 복사"
-                        >
-                          {copiedId === board.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
-                        </button>
-                        <Link
-                          href={`/board/${board.id}`}
-                          target="_blank"
-                          className="shrink-0 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
-                          title="새 탭으로 열기"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
-                        </Link>
-                      </div>
+                      <Link
+                        href={`/board/${board.id}`}
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm shadow-indigo-500/20 whitespace-nowrap"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>고객 페이지 열기</span>
+                      </Link>
                     </td>
                     <td className="px-6 py-4">
                       {board.unreadMessages > 0 ? (
