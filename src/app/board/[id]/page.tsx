@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Download, Send, Layers, MapPin, X } from "lucide-react";
+import { CheckCircle, AlertCircle, MessageSquare, Image as ImageIcon, Download, Send, Layers, MapPin, X, Maximize } from "lucide-react";
 import { doc, collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { sendMessage, updateBoardStatus, Board, Message, requestEdit, deleteMessage } from "../../../lib/services";
@@ -16,6 +16,7 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedVersion, setSelectedVersion] = useState<number>(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   // 핀 찍기 상태
   const [newPin, setNewPin] = useState<{ x: number, y: number, imageIndex: number } | null>(null);
@@ -191,11 +192,18 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
             ))}
           </div>
 
-          <div className="absolute top-20 left-4 z-10 flex space-x-2">
+          <div className="absolute top-20 left-4 right-4 z-10 flex items-center justify-between">
             <span className="bg-neutral-900/90 backdrop-blur-sm border border-neutral-800 text-neutral-300 text-xs font-semibold px-4 py-2 rounded-full flex items-center shadow-lg pointer-events-none">
               <MapPin className="w-3.5 h-3.5 mr-2 text-rose-500" />
               이미지를 클릭하여 피드백 핀을 남겨보세요!
             </span>
+            <button
+              onClick={() => setIsFullscreen(true)}
+              className="flex items-center space-x-2 px-3 py-2 bg-neutral-900/90 backdrop-blur-sm border border-neutral-700 hover:bg-neutral-800 text-neutral-200 rounded-full text-xs font-semibold shadow-lg transition-colors"
+            >
+              <Maximize className="w-3.5 h-3.5" />
+              <span>원본보기</span>
+            </button>
           </div>
 
           <div className="flex-1 flex flex-col items-center p-8 overflow-auto CustomScrollbar bg-neutral-950 pb-32 space-y-12">
@@ -363,6 +371,37 @@ export default function ClientBoardView({ params }: { params: Promise<{ id: stri
         </aside>
 
       </main>
+
+      {/* 전체화면 원본보기 */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[200] bg-black flex flex-col animate-in fade-in duration-200">
+          <div className="p-4 flex justify-between items-center absolute top-0 left-0 right-0 z-10 pointer-events-none">
+            <span className="font-bold text-white text-sm pointer-events-auto bg-black/60 px-4 py-2 rounded-xl backdrop-blur-md">
+              {board.projectName} — {selectedVersion}차 시안 원본보기
+            </span>
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="bg-black/60 hover:bg-rose-600 p-3 rounded-xl transition-colors pointer-events-auto backdrop-blur-md border border-neutral-800"
+              title="닫기"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+          </div>
+          <div
+            className="flex-1 w-full h-full flex flex-col items-center justify-start p-8 pt-20 bg-black cursor-zoom-out overflow-y-auto space-y-12 pb-32"
+            onClick={() => setIsFullscreen(false)}
+          >
+            {currentImages.map((src, idx) => (
+              <img
+                key={idx}
+                src={src}
+                alt={`원본 ${idx + 1}`}
+                className="max-w-full h-auto object-contain pointer-events-none shadow-2xl"
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

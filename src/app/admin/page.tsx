@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Clock, ExternalLink, MessageCircle, LayoutGrid, List as ListIcon, Trash2, Calendar } from "lucide-react";
+import { Clock, ExternalLink, MessageCircle, LayoutGrid, List as ListIcon, Trash2, Calendar, Copy, Check } from "lucide-react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { Board, deleteBoard } from "../../lib/services";
@@ -13,6 +13,16 @@ export default function AdminDashboard() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyUrl = (e: React.MouseEvent, boardId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${window.location.origin}/board/${boardId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(boardId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   useEffect(() => {
     const q = query(collection(db, "boards"), orderBy("updatedAt", "desc"));
@@ -182,6 +192,7 @@ export default function AdminDashboard() {
                   <th className="px-6 py-4 font-medium">시작일</th>
                   <th className="px-6 py-4 font-medium">버전</th>
                   <th className="px-6 py-4 font-medium">진행 상태</th>
+                  <th className="px-6 py-4 font-medium">고객 URL</th>
                   <th className="px-6 py-4 font-medium">메시지</th>
                   <th className="px-6 py-4 font-medium text-right">관리</th>
                 </tr>
@@ -194,6 +205,27 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 text-xs text-neutral-500 font-mono">{formatDate(board.createdAt)}</td>
                     <td className="px-6 py-4 text-neutral-500">{board.currentVersion}차</td>
                     <td className="px-6 py-4">{getStatusBadge(board.status)}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-1.5 max-w-[220px]">
+                        <span className="text-xs text-indigo-400 dark:text-indigo-400 font-mono truncate">/board/{board.id}</span>
+                        <button
+                          onClick={(e) => handleCopyUrl(e, board.id!)}
+                          className="shrink-0 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                          title="URL 복사"
+                        >
+                          {copiedId === board.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 text-neutral-400" />}
+                        </button>
+                        <Link
+                          href={`/board/${board.id}`}
+                          target="_blank"
+                          className="shrink-0 p-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                          title="새 탭으로 열기"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+                        </Link>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       {board.unreadMessages > 0 ? (
                         <span className="flex w-max items-center space-x-1 text-xs font-bold text-white bg-rose-600 px-2.5 py-1 rounded-full shadow-sm animate-pulse">
